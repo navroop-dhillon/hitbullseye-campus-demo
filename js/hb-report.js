@@ -345,11 +345,11 @@ var HBR = (function(){
     if(r.distribution){
       html += sec("Step 7", "How do I compare with others?", "Each bar is how many students got that score. Your bar is blue.",
         '<div class="an-card"><div class="an-chart" id="c-dist"></div><div class="an-legend"><span><i style="background:var(--viz-you)"></i>Your score</span><span><i style="background:var(--viz-peer)"></i>Other students</span></div></div>' +
-        '<div class="an-grid an-12 mt"><div class="an-card"><div class="row-b"><div><h3>Score vs percentile</h3><div class="sub">What each score was worth on this test. The red dot is you.</div></div>' +
+        '<div class="an-card mt"><div class="row-b"><div><h3>Score vs percentile</h3><div class="sub">What each score was worth on this test. The red dot is you.</div></div>' +
           '<select class="an-sel" id="curveSel"><option value="overall">Overall</option>' + stS.map(function(x){ return '<option value="' + esc(x.id) + '">' + esc(x.name) + "</option>"; }).join("") + "</select></div>" +
-          '<div class="an-chart" id="c-curve"></div></div>' + toppersCard(d.standing.toppers, ctx) + "</div>" +
+          '<div class="an-chart" id="c-curve"></div></div>' +
         say([
-          "You scored more than " + B(Math.round(r.percentile) + "%") + " of the " + r.distribution.students + " students on this test" + (rank ? " (rank " + rank.rank + ")." : "."),
+          "You scored more than " + B(Math.round(r.percentile) + "%") + " of the " + r.distribution.students + " students on this test" + (rank ? " (rank " + rank.rank + " of " + rank.of + ")." : "."),
           "The middle score was " + B(F.num(r.distribution.median, 1)) + " and the top score " + B(F.num(r.distribution.top, 1)) + "."
         ]));
     }
@@ -396,7 +396,6 @@ var HBR = (function(){
           drawCurve("overall");
           root.querySelector("#curveSel").addEventListener("change", function(e){ drawCurve(e.target.value); });
         }
-        bindToppers(root);
         var stripEl = root.querySelector("#c-strip");
         var drawStrip = function(hl){ stripEl.innerHTML = ""; HBC.mount(stripEl, HBC.strip(r.questions, hl, TAGS)); };
         drawStrip(null);
@@ -406,27 +405,6 @@ var HBR = (function(){
     };
   }
 
-  function toppersCard(tp, ctx){
-    if(!tp) return '<div class="an-card"><h3>Toppers</h3><p class="sub">Not enough students yet.</p></div>';
-    function rows(list){
-      return list.map(function(x){
-        var nm = x.isYou ? "You" : ctx.nameOf(x.studentId) || "A student";
-        return '<div class="an-top' + (x.isYou ? " you" : "") + '"><span class="rk">' + x.rank + '</span><span class="nm">' + esc(nm) + "</span><span class=\"dt\">" + esc(F.date(x.takenAt)) + "</span><b>" + F.num(x.score, 1) + "</b></div>";
-      }).join("") || '<p class="sm mut" style="padding:10px 0">Nobody in the last 7 days.</p>';
-    }
-    return '<div class="an-card an-toppers"><div class="row-b"><h3>Toppers</h3><div class="an-seg" role="tablist"><button class="on" data-tp="o">Overall</button><button data-tp="r">Recent</button></div></div>' +
-      '<div data-tpl="o">' + rows(tp.overall) + '</div><div data-tpl="r" hidden>' + rows(tp.recent) + "</div>" +
-      '<p class="sm mut mt-s">' + (tp.yourRank ? "Your rank: <b>" + tp.yourRank + "</b> of " + tp.students + ". " : "") + "Recent = taken in the last 7 days. Names come from the student login, not the analytics data.</p></div>";
-  }
-  function bindToppers(root){
-    var box = root.querySelector(".an-toppers");
-    if(!box) return;
-    box.querySelector(".an-seg").addEventListener("click", function(e){
-      var b = e.target.closest("button"); if(!b) return;
-      box.querySelectorAll(".an-seg button").forEach(function(x){ x.classList.toggle("on", x === b); });
-      box.querySelectorAll("[data-tpl]").forEach(function(x){ x.hidden = x.getAttribute("data-tpl") !== b.getAttribute("data-tp"); });
-    });
-  }
   function shareLine(shares){
     var worst = shares.slice().sort(function(a, b){ return (b.time - b.score) - (a.time - a.score); })[0];
     if(!worst || worst.time - worst.score < 0.1) return "";
